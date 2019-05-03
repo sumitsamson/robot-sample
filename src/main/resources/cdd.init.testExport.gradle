@@ -1,0 +1,107 @@
+import org.gradle.api.internal.tasks.testing.TestClassProcessor
+import org.gradle.api.internal.tasks.testing.TestClassRunInfo
+import org.gradle.api.internal.tasks.testing.TestResultProcessor
+import org.gradle.api.internal.tasks.testing.detection.DefaultTestClassScanner
+import javax.inject.Inject;
+import org.gradle.tooling.provider.model.ToolingModelBuilder;
+import org.gradle.tooling.provider.model.ToolingModelBuilderRegistry;
+
+class ExportingTestProcessor implements TestClassProcessor {
+    private Project proj;
+    private Task task;
+    private List<String> tests;
+
+    ExportingTestProcessor(Project proj, Task task, final Map<String, List<String>> task2tests) {
+        this.proj = proj;
+        this.task = task;
+        this.tests = new LinkedList<String>();
+
+        task2tests.put(task.getName(), this.tests)
+    }
+
+    @Override
+    void processTestClass(TestClassRunInfo testClass) {
+        println ""
+        println "@@@ Project @@@ >>> " + this.proj.getPath()
+        println "@@@@ Task @@@@@ >>> " + this.task.getName()
+        println "@@@@ TEST @@@@@ >>> " + testClass.getTestClassName()
+        println ""
+
+        this.tests.add(testClass.getTestClassName())
+    }
+
+    @Override
+    void stop() {}
+    @Override
+    void startProcessing(TestResultProcessor resultProcessor) {}
+}
+
+public class ToolingApiCustomModelPlugin implements Plugin<Project> {
+    private final ToolingModelBuilderRegistry registry;
+
+    @Inject
+    public ToolingApiCustomModelPlugin(ToolingModelBuilderRegistry registry) {
+        this.registry = registry;
+    }
+
+    @Override
+    public void apply(Project project) {
+        registry.register(new CustomToolingModelBuilder());
+    }
+
+    private static class CustomToolingModelBuilder implements ToolingModelBuilder {
+        @Override
+        public boolean canBuild(String modelName) {
+            return modelName.equals(Map.class.getName());
+        }
+
+        @Override
+        public Object buildAll(String modelName, Project project) {
+            Map<String, List<String>> task2tests = new HashMap<String, List<String>>();
+            project.tasks.withType(Test) { testTask ->
+                FileTree testClassFiles = testTask.getCandidateClassFiles()
+                def testFramework = testTask.getTestFramework()
+                Runnable testClassScanner =
+                        new DefaultTestClassScanner(
+                                testClassFiles,
+                                testFramework.getDetector(),
+                                new ExportingTestProcessor(project, testTask, task2tests)
+                        )
+                testClassScanner.run()
+            }
+            return task2tests;
+        }
+    }
+}
+
+allprojects { proj ->
+    afterEvaluate {
+        apply plugin: ToolingApiCustomModelPlugin, to: proj
+    }
+}
+
+/*
+allprojects {
+    afterEvaluate {
+        tasks.withType(Test) { testTask ->
+            FileTree testClassFiles = testTask.getCandidateClassFiles()
+            def testFramework = testTask.getTestFramework()
+            Runnable testClassScanner =
+                    new DefaultTestClassScanner(
+                            testClassFiles,
+                            testFramework.getDetector(),
+                            new ExportingTestProcessor(project, testTask)
+                    )
+            testClassScanner.run()
+        }
+    }
+}
+*/
+
+rootProject {
+    task nop {
+        doLast {
+            println ""
+        }
+    }
+}

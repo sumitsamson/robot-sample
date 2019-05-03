@@ -1,0 +1,32 @@
+allprojects {
+
+    task enableTestHtmlReports {
+        doLast {
+            tasks.withType(Test) { testTask ->
+                testTask.reports.each { report ->
+                    report.enabled = true
+                    if ( "html".equals(report.name) ){
+                        report.destination = "$buildDir/reports/tests/${testTask.name}"
+                    } else {
+                        report.destination = "$buildDir/test-results/${testTask.name}"
+                    }
+                    _listProperties(report, "report")
+                }
+            }
+        }
+    }
+
+    tasks.withType(Test) { testTask ->
+        testTask.dependsOn enableTestHtmlReports
+    }
+}
+
+def _listProperties(obj, title) {
+    println "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+    println title
+    println "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+
+    obj.getProperties().each { name2val ->
+        println "Name: ${name2val.key} Value: ${name2val.value}"
+    }
+}

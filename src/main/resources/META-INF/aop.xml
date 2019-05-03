@@ -1,0 +1,10 @@
+<aspectj>
+
+    <!-- Uncomment this to see aspectj weaving information in log -->
+    <!--weaver options="-verbose -debug -showWeaveInfo"-->
+    <weaver>
+        <!-- Add package of your plugin API classes in order to add executionId to your logs -->
+        <include within="com.ca.cdd.plugins.gradletesting.controllers.*" />
+    </weaver>
+
+</aspectj>

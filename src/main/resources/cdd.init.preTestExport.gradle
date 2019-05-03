@@ -1,0 +1,7 @@
+allprojects {
+    task prepareForTests { prepareTask ->
+        tasks.withType(Test) { testTask ->
+            prepareTask.dependsOn testTask.getDependsOn()
+        }
+    }
+}

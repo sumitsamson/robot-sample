@@ -1,0 +1,135 @@
+{
+  "name": "Gradle Testing",
+  "vendor": "CA Technologies",
+  "uniqueId": "CA Technologies Gradle Testing",
+  "description": "Plugin for gradle based testing. Junit, TestNG - through gradle.",
+  "version": "1.2",
+  "iconUrl":"gradle.png",
+  "endpointTemplate": {
+    "name": "Gradle (Testing)",
+    "description": "Endpoint Template for Gradle",
+    "serviceType": "ENDPOINT",
+    "url": "Endpoint",
+    "uniqueId": "Endpoint",
+    "parameters": [
+      {
+        "uniqueId": "gradle_version",
+        "name": "gradleVersion",
+        "displayName": "Gradle Version",
+        "type": "string",
+        "isOptional": false,
+        "defaultValue": "4.4",
+        "description": "Gradle Version",
+        "possibleValues": [
+          "4.4",
+          "4.0.2",
+          "3.5",
+          "3.0",
+          "2.14"
+          ]
+      },
+      {
+        "uniqueId": "source_control",
+        "name": "sourceControl",
+        "displayName": "Version Control System",
+        "type": "string",
+        "isOptional": false,
+        "defaultValue": "Git",
+        "description": "Specify the version Control System where your project source is",
+        "possibleValues": [
+          {
+            "value": "Git",
+            "parameters": [
+              {
+                "uniqueId": "gitUrl",
+                "name": "gitUrl",
+                "displayName": "Git Project URL",
+                "type": "string",
+                "isOptional": false,
+                "defaultValue": "https://github.com/cde-test-user/cdd.git",
+                "description": "Specifies the URL to access the Git project repository"
+              },
+              {
+                "uniqueId": "gitUsername",
+                "name": "gitUsername",
+                "displayName": "GitHub User Name",
+                "type": "string",
+                "isOptional": true,
+                "defaultValue": "",
+                "description": "Specifies the Git username"
+              },
+              {
+                "uniqueId": "gitUserPassword",
+                "name": "gitUserPassword",
+                "displayName": "GitHub User Password",
+                "type": "password",
+                "isOptional": true,
+                "defaultValue": "",
+                "description": "Specifies the password for the Git user"
+              }
+            ]
+          }, {
+            "value": "Svn",
+            "parameters": [
+              {
+                "name": "svnUrl",
+                "uniqueId": "svnUrl",
+                "displayName": "Svn Project URL",
+                "type": "string",
+                "isOptional": false,
+                "defaultValue": "https://svnRepository/myRepo",
+                "description": "Specifies the URL to access the SVN project repository"
+              },
+              {
+                "uniqueId": "svnUsername",
+                "name": "svnUsername",
+                "displayName": "Svn User Name",
+                "type": "string",
+                "isOptional": true,
+                "defaultValue": "",
+                "description": "Specifies the SVN username"
+              },
+              {
+                "uniqueId": "svnPassword",
+                "name": "svnPassword",
+                "displayName": "Svn User Password",
+                "type": "password",
+                "isOptional": true,
+                "description": " Specifies the SVN user password"
+              }
+            ]
+          }
+
+        ]
+      }
+    ],
+    "endPointType": "ENDPOINT"
+  },
+
+  "services": [
+    {
+      "name": "Import Test Suites",
+      "description": "Import Test Classes",
+      "serviceType": "TEST_SOURCE",
+      "url": "api/test-sources/test-suites",
+      "uniqueId": "ca.cdd.gradletesting.test.suites",
+      "importParameters": [
+        {
+          "uniqueId": "branch",
+          "name": "branch",
+          "displayName": "Branch",
+          "type": "string",
+          "isOptional": false,
+          "description": " For SVN enter the Branch path, and for Git enter the branch name"
+        }
+      ]
+    },
+    {
+      "name": "TFS CONNECTION TEST",
+      "description": "gradle testing connection test",
+      "serviceType": "CONNECTIVITY_TEST",
+      "url": "api/connectivity-tests/connect",
+      "uniqueId": "gradleTestingConnectionTest"
+    }
+  ]
+}
