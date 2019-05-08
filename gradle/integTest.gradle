@@ -1,0 +1,90 @@
+sourceSets {
+    integTest {
+        java.srcDir 'src/integTest/java'
+        resources.srcDir 'src/integTest/resources'
+    }
+
+    integTest.resources.srcDir 'src/sharedResources'
+    main.resources.srcDir 'src/sharedResources'
+    test.resources.srcDir 'src/sharedResources'
+}
+
+dependencies {
+    integTestCompile sourceSets.main.output
+    integTestCompile sourceSets.test.output
+
+    integTestCompile configurations.compile
+    integTestCompile configurations.testCompile
+
+    integTestRuntime configurations.runtime
+    integTestRuntime configurations.testRuntime
+}
+
+task integTest(type: Test) {
+    outputs.upToDateWhen { false }
+    ignoreFailures = true
+
+
+    useJUnit {
+        if (project.hasProperty("categories")) {
+            for (String category : categories.split(",")) {
+                includeCategories "com.ca.rp.junit.categories." + category
+            }
+        }
+
+        if (project.hasProperty("xcategories")) {
+            for (String category : xcategories.split(",")) {
+                excludeCategories "com.ca.rp.junit.categories." + category
+            }
+        }
+
+        def useSaasProperty = System.getProperty("test.ROBOT_SAAS")
+        def excludeCategory = useSaasProperty != null && useSaasProperty.equalsIgnoreCase("true") ? "PremOnly" : "SaaSOnly"
+        excludeCategories "com.ca.rp.junit.categories." + excludeCategory
+    }
+
+    group = LifecycleBasePlugin.VERIFICATION_GROUP
+    description = 'Runs the integration tests.'
+
+    maxHeapSize = '1024m'
+
+    testClassesDirs = sourceSets.integTest.output.classesDirs
+    classpath = sourceSets.integTest.runtimeClasspath
+
+    binResultsDir = file("$buildDir/reports/integ-test-results/binary")
+
+    reports {
+        html.enabled = true
+        html.setDestination(file("$buildDir/reports/integ-test-report"))
+        junitXml.setDestination(file("$buildDir/reports/integ-test-results"))
+    }
+
+    mustRunAfter tasks.test
+
+    def PROP_PREFIX = "test."
+    System.getProperties().each { key, val ->
+        if (key.startsWith(PROP_PREFIX)) {
+            def newKey = key.substring(PROP_PREFIX.size())
+            println "~~~> Passing a sys parameter to tests execution: $newKey: $val"
+            systemProperty newKey, val
+        }
+    }
+}
+
+gradle.projectsEvaluated {
+    def quickTasks = []
+
+    gradle.rootProject.allprojects.each { project ->
+        quickTasks.addAll(project.tasks.findAll { it.name == 'test' })
+        quickTasks.addAll(project.tasks.findAll { it.name == 'runRobotTests' })
+        quickTasks.addAll(project.tasks.withType(FindBugs))
+        quickTasks.addAll(project.tasks.withType(Pmd))
+    }
+
+    quickTasks.each { task ->
+        project.tasks.integTest.mustRunAfter task
+    }
+}
+
+// Adopted from:
+// https://www.michael-bull.com/blog/2016/06/04/separating-integration-and-unit-tests-with-gradle
